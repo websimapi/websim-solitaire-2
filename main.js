@@ -11,6 +11,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let game, ui, drag, sound;
 
+    function handleAutoPlay() {
+        if (game.autoPlayToFoundations()) {
+            sound.play('place');
+        } else {
+            sound.play('invalid');
+        }
+    }
+
     function startNewGame() {
         if (ui) {
             ui.clearBoard();
@@ -23,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         game.onStateChanged = (newState) => {
             ui.render(newState);
-            drag.makeCardsDraggable();
+            drag.addCardListeners();
         };
 
         game.onGameWon = () => {
@@ -38,16 +46,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     newGameBtn.addEventListener('click', startNewGame);
-    autoWinBtn.addEventListener('click', () => {
-        if (game.autoPlayToFoundations()) {
-            sound.play('place');
-        } else {
-            sound.play('invalid');
-        }
-    });
+    autoWinBtn.addEventListener('click', handleAutoPlay);
     winNewGameBtn.addEventListener('click', () => {
         ui.hideWinScreen();
         startNewGame();
+    });
+
+    gameContainer.addEventListener('dblclick', (e) => {
+        if (e.target === gameContainer || e.target.id === 'tableau') {
+             handleAutoPlay();
+        }
+    });
+
+    // Handle stock clicks
+    gameContainer.addEventListener('click', (e) => {
+        const stockPile = e.target.closest('.stock-pile');
+        if (stockPile) {
+            game.dealFromStock();
+            sound.play('deal');
+        }
     });
 
     // Prevent context menu on long press on mobile
@@ -55,3 +72,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
     startNewGame();
 });
+

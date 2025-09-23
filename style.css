@@ -160,6 +160,7 @@ body {
     box-shadow: 0 1px 3px rgba(0,0,0,0.2);
     -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
     transition: transform 0.2s ease-out;
+    overflow: hidden;
 }
 
 .card.dragging {
@@ -193,6 +194,7 @@ body {
     background-color: var(--color-card-back);
     background-image: url('card-back.png');
     background-size: cover;
+    background-position: center;
     border: 1px solid rgba(0,0,0,0.2);
     /* transform: rotateY(180deg); This is handled by is-flipped now */
 }
