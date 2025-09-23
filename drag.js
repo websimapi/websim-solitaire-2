@@ -12,6 +12,8 @@ export class Drag {
         this.startPile = null;
         this.isDragging = false;
         this.dragStarted = false; // Track if drag actually started
+        this.pointerId = null;
+        this.captureEl = null;
 
         // Store original positions for snap back
         this.originalPositions = [];
@@ -100,7 +102,7 @@ export class Drag {
     }
 
     onPointerDown(e) {
-        if (e.button !== 0 || e.target.closest('.is-flipped')) return;
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
 
         const cardElement = e.target.closest('.card');
         if (!cardElement) return;
@@ -152,6 +154,10 @@ export class Drag {
                 y: elRect.top - containerRect.top
             };
         });
+
+        this.pointerId = e.pointerId;
+        this.captureEl = e.currentTarget;
+        try { this.captureEl.setPointerCapture(this.pointerId); } catch {}
     }
 
     onPointerMove(e) {
@@ -278,6 +284,9 @@ export class Drag {
         this.draggedElements = [];
         this.startPile = null;
         this.originalPositions = [];
+
+        this.pointerId = null;
+        this.captureEl = null;
 
         // Reset drag flags after a short delay to prevent click events from firing
         setTimeout(() => {
