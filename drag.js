@@ -86,10 +86,13 @@ export class Drag {
         
         const [pileType] = pileName.split('-');
         
-        // Allow dragging from tableau, waste, or foundations.
-        // For waste and foundations, only the top card can be dragged.
-        if (pileType === 'tableau' || ((pileType === 'waste' || pileType === 'foundation') && cardIndex === pile.length - 1)) {
-            // This is a valid card to start dragging.
+        // Allow dragging from tableau stacks.
+        if (pileType === 'tableau') {
+             // Draggable.
+        } 
+        // Allow dragging top card from waste or foundations.
+        else if ((pileType === 'waste' || pileType === 'foundation') && cardIndex === pile.length - 1) {
+            // Draggable.
         } else {
             return; // Not a draggable card/pile
         }

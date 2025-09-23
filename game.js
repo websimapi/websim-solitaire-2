@@ -190,10 +190,16 @@ export class Game {
     }
 
     findAutoMoveTarget(cardId, targetType = 'foundation') {
-        const { card, pile, cardIndex } = this.getCardAndPile(cardId);
+        const { card, pile, cardIndex, pileName } = this.getCardAndPile(cardId);
         
-        // Card must be the top card of its current pile (or only card being moved from waste)
-        if (!card || !card.isFaceUp || cardIndex !== pile.length - 1) {
+        // Card must be face up.
+        if (!card || !card.isFaceUp) {
+            return null;
+        }
+
+        // Card must be available to move (top of waste, or bottom of a tableau stack).
+        const [pileType] = pileName.split('-');
+        if(pileType !== 'waste' && pileType !== 'foundation' && cardIndex !== pile.length - 1) {
             return null;
         }
 
