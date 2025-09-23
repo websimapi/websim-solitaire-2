@@ -1,1 +1,0 @@
-console.log('Solitaire reset - starting from scratch.');
