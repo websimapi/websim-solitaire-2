@@ -7,6 +7,8 @@ export class Drag {
         this.draggedElements = [];
         this.offsetX = 0;
         this.offsetY = 0;
+        this.startX = 0; // To track starting pointer position
+        this.startY = 0;
         this.startPile = null;
         this.isDragging = false;
         
@@ -73,7 +75,9 @@ export class Drag {
         const cardElement = e.target.closest('.card');
         if (!cardElement) return;
 
-        this.isDragging = false; // Reset dragging state
+        // A pointerdown might be a click or the start of a drag.
+        // We'll only set isDragging to true after a certain movement threshold.
+        this.isDragging = false;
 
         const cardId = cardElement.dataset.id;
         const { pile, pileName, cardIndex } = this.game.getCardAndPile(cardId);
@@ -96,9 +100,14 @@ export class Drag {
 
         if (this.draggedElements.length === 0 || !this.draggedElements[0]) return;
         
+        // Prevent default actions like text selection
+        e.preventDefault();
+        
         const rect = this.draggedElements[0].getBoundingClientRect();
         this.offsetX = e.clientX - rect.left;
         this.offsetY = e.clientY - rect.top;
+        this.startX = e.clientX;
+        this.startY = e.clientY;
 
         document.addEventListener('pointermove', this.onPointerMove);
         document.addEventListener('pointerup', this.onPointerUp, { once: true });
@@ -110,12 +119,19 @@ export class Drag {
         e.preventDefault();
 
         if (!this.isDragging) {
-             this.isDragging = true;
-             this.prepareForDrag();
+            const dx = e.clientX - this.startX;
+            const dy = e.clientY - this.startY;
+            // Only start dragging if the pointer has moved a certain distance
+            if (Math.sqrt(dx * dx + dy * dy) > 5) {
+                this.isDragging = true;
+                this.prepareForDrag();
+            }
         }
        
-        this.updateDraggedElementsPosition(e.clientX, e.clientY);
-        this.updateDropZoneHighlight(e.clientX, e.clientY);
+        if (this.isDragging) {
+            this.updateDraggedElementsPosition(e.clientX, e.clientY);
+            this.updateDropZoneHighlight(e.clientX, e.clientY);
+        }
     }
     
     prepareForDrag() {
@@ -133,7 +149,7 @@ export class Drag {
          const y = clientY - this.offsetY;
          this.draggedElements.forEach((el, i) => {
              const yOffset = i * visibleOverlap;
-             el.style.transform = `translate(${x}px, ${y + yOffset}px)`;
+             el.style.transform = `translate(${x}px, ${y + yOffset}px) rotate(0.001deg)`; // using rotateZ for hardware acceleration
          });
     }
     
@@ -188,6 +204,8 @@ export class Drag {
         this.draggedCards = [];
         this.draggedElements = [];
         // Important: set isDragging to false at the end of the whole sequence.
+        // This setTimeout ensures that any 'click' event that fires after 'pointerup'
+        // can be correctly ignored because isDragging will still be true.
         setTimeout(() => this.isDragging = false, 0);
     }
 }
