@@ -21,6 +21,7 @@ export class Drag {
         this.onPointerDown = this.onPointerDown.bind(this);
         this.onPointerMove = this.onPointerMove.bind(this);
         this.onPointerUp = this.onPointerUp.bind(this);
+        this.onPilePointerDown = this.onPilePointerDown.bind(this);
 
         // Add global listeners for move and up events
         document.addEventListener('pointermove', this.onPointerMove, { passive: false });
@@ -49,6 +50,11 @@ export class Drag {
 
         // Prevent scrolling on the game container
         document.getElementById('game-container').addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+
+        document.querySelectorAll('.tableau-pile').forEach(pileEl => {
+            pileEl.removeEventListener('pointerdown', this.onPilePointerDown);
+            pileEl.addEventListener('pointerdown', this.onPilePointerDown, { passive: false });
+        });
     }
 
     onCardClick(e, cardElement) {
@@ -99,6 +105,51 @@ export class Drag {
         } else {
             this.sound.play('invalid');
         }
+    }
+
+    onPilePointerDown(e) {
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+
+        const pileEl = e.target.closest('.tableau-pile');
+        if (!pileEl || e.target.closest('.card')) return; // avoid intercepting card drags
+
+        e.preventDefault(); e.stopPropagation();
+
+        const pileName = pileEl.dataset.pile;
+        const index = Number(pileName.split('-')[1]);
+        const pile = this.game.state.tableau[index];
+        if (!pile || pile.length === 0) return;
+
+        const firstFaceUpIndex = pile.findIndex(c => c.isFaceUp);
+        if (firstFaceUpIndex === -1) return;
+
+        const cardsToMove = pile.slice(firstFaceUpIndex);
+        if (!this.game.isValidTableauSequence(cardsToMove)) return;
+
+        // Initialize drag state with whole face-up stack
+        this.isDragging = false;
+        this.dragStarted = false;
+        this.startPile = pileName;
+        this.draggedCards = cardsToMove;
+        this.draggedElements = cardsToMove.map(c => document.querySelector(`[data-id="${c.id}"]`));
+        const topEl = this.draggedElements[0];
+        if (!topEl) return;
+
+        const rect = topEl.getBoundingClientRect();
+        this.offsetX = e.clientX - rect.left;
+        this.offsetY = e.clientY - rect.top;
+        this.startX = e.clientX;
+        this.startY = e.clientY;
+
+        this.originalPositions = this.draggedElements.map(el => {
+            const elRect = el.getBoundingClientRect();
+            const containerRect = document.getElementById('game-container').getBoundingClientRect();
+            return { x: elRect.left - containerRect.left, y: elRect.top - containerRect.top };
+        });
+
+        this.pointerId = e.pointerId;
+        this.captureEl = pileEl;
+        try { this.captureEl.setPointerCapture(this.pointerId); } catch {}
     }
 
     onPointerDown(e) {
