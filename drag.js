@@ -31,6 +31,8 @@ export class Drag {
             card.onclick = (e) => this.onCardClick(e, card);
             card.ondblclick = (e) => this.onCardDblClick(e, card);
         });
+        // Prevent scrolling on the game container, which can interfere with dragging
+        document.getElementById('game-container').addEventListener('touchmove', e => e.preventDefault(), { passive: false });
     }
 
     onCardClick(e, cardElement) {
@@ -185,13 +187,13 @@ export class Drag {
         document.querySelectorAll('.pile').forEach(p => p.classList.remove('drop-valid', 'drop-invalid'));
         
         // Temporarily hide cards to find element underneath
-        const originalDisplays = this.draggedElements.map(el => el.style.display);
-        this.draggedElements.forEach(el => el.style.display = 'none');
+        const visibility = this.draggedElements.map(el => el.style.visibility);
+        this.draggedElements.forEach(el => el.style.visibility = 'hidden');
         
         const dropTarget = document.elementFromPoint(x, y)?.closest('.pile');
         
         // Restore elements
-        this.draggedElements.forEach((el, i) => el.style.display = originalDisplays[i] || '');
+        this.draggedElements.forEach((el, i) => el.style.visibility = visibility[i] || '');
         
         if (dropTarget) {
             const targetPileName = dropTarget.dataset.pile;
@@ -212,13 +214,13 @@ export class Drag {
             }
     
             // Temporarily hide cards to find element underneath
-            const originalDisplays = this.draggedElements.map(el => el.style.display);
-            this.draggedElements.forEach(el => el.style.display = 'none');
+            const visibility = this.draggedElements.map(el => el.style.visibility);
+            this.draggedElements.forEach(el => el.style.visibility = 'hidden');
             
             const dropTarget = document.elementFromPoint(e.clientX, e.clientY)?.closest('.pile');
             
             // Restore elements before state change
-            this.draggedElements.forEach((el, i) => el.style.display = originalDisplays[i] || '');
+            this.draggedElements.forEach((el, i) => el.style.visibility = visibility[i] || '');
             
             let moveSuccessful = false;
             if (dropTarget) {
@@ -230,6 +232,7 @@ export class Drag {
                 this.sound.play('place');
             } else {
                 this.sound.play('invalid');
+                // The reset will handle snapping back, no need for extra code here
             }
         }
         
