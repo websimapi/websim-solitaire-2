@@ -61,7 +61,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle stock clicks
     gameContainer.addEventListener('click', (e) => {
         const stockPile = e.target.closest('.stock-pile');
-        if (stockPile) {
+        // Only handle clicks on the empty stock pile itself, card clicks are handled elsewhere
+        if (stockPile && e.target === stockPile) {
             game.dealFromStock();
             sound.play('deal');
         }
@@ -72,4 +73,3 @@ document.addEventListener('DOMContentLoaded', () => {
 
     startNewGame();
 });
-

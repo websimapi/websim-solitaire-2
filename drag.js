@@ -36,6 +36,12 @@ export class Drag {
         const pileName = cardElement.dataset.pile;
         const [type, index] = pileName.split('-');
 
+        if (type === 'stock') {
+            this.game.dealFromStock();
+            this.sound.play('deal');
+            return;
+        }
+
         if (cardElement.classList.contains('is-flipped')) {
             const pile = this.game.state.tableau[index];
             if (pile && pile.length > 0 && pile[pile.length - 1].id === cardId) {
