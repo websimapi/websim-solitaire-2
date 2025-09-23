@@ -6,6 +6,7 @@ import { Sound } from './sound.js';
 document.addEventListener('DOMContentLoaded', () => {
     const gameContainer = document.getElementById('game-container');
     const newGameBtn = document.getElementById('new-game-btn');
+    const autoWinBtn = document.getElementById('auto-win-btn');
     const winNewGameBtn = document.getElementById('win-new-game-btn');
 
     let game, ui, drag, sound;
@@ -37,6 +38,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     newGameBtn.addEventListener('click', startNewGame);
+    autoWinBtn.addEventListener('click', () => {
+        if (game.autoPlayToFoundations()) {
+            sound.play('place');
+        } else {
+            sound.play('invalid');
+        }
+    });
     winNewGameBtn.addEventListener('click', () => {
         ui.hideWinScreen();
         startNewGame();
@@ -47,4 +55,3 @@ document.addEventListener('DOMContentLoaded', () => {
 
     startNewGame();
 });
-

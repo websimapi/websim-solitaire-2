@@ -1,9 +1,9 @@
 :root {
-    --card-width: clamp(45px, 12.5vw, 100px);
+    --card-width: clamp(40px, 12.8vw, 90px);
     --card-height: calc(var(--card-width) * 1.4);
-    --card-border-radius: clamp(4px, 1vw, 8px);
-    --pile-gap: clamp(8px, 2vw, 16px);
-    --tableau-overlap-visible: calc(var(--card-height) / 5);
+    --card-border-radius: clamp(3px, 1.2vw, 6px);
+    --pile-gap: clamp(4px, 1.5vw, 12px);
+    --tableau-overlap-visible: calc(var(--card-height) / 4.5);
     --tableau-overlap-hidden: calc(var(--card-height) / 10);
     
     --color-background: #0d472a;
@@ -17,6 +17,10 @@
     --color-accent: #ffc107;
 
     font-size: 16px;
+    --safe-area-inset-top: env(safe-area-inset-top, 0px);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-inset-left: env(safe-area-inset-left, 0px);
+    --safe-area-inset-right: env(safe-area-inset-right, 0px);
 }
 
 * {
@@ -31,9 +35,8 @@ body {
     background: radial-gradient(circle, var(--color-felt) 0%, var(--color-background) 80%);
     color: var(--color-text-light);
     overflow: hidden;
-    /* Use dvh for mobile browser compatibility with toolbars */
     height: 100dvh;
-    width: 100vw;
+    width: 100dvw;
     user-select: none;
     position: fixed; /* Prevents pull-to-refresh and other gestures */
 }
@@ -42,6 +45,10 @@ body {
     display: flex;
     flex-direction: column;
     padding: var(--pile-gap);
+    padding-top: calc(var(--pile-gap) + var(--safe-area-inset-top));
+    padding-bottom: calc(var(--pile-gap) + var(--safe-area-inset-bottom));
+    padding-left: calc(var(--pile-gap) + var(--safe-area-inset-left));
+    padding-right: calc(var(--pile-gap) + var(--safe-area-inset-right));
     height: 100dvh;
     gap: var(--pile-gap);
 }
@@ -56,13 +63,13 @@ body {
 
 #game-menu {
     display: flex;
+    flex-direction: column;
+    gap: var(--pile-gap);
     align-items: center;
-    justify-content: center;
-    width: 100%;
 }
 
-#new-game-btn, #win-new-game-btn {
-    padding: 0.75em 1.5em;
+#new-game-btn, #auto-win-btn, #win-new-game-btn {
+    padding: 0.5em;
     font-size: 1rem;
     font-weight: bold;
     color: var(--color-black);
@@ -72,9 +79,20 @@ body {
     cursor: pointer;
     transition: background-color 0.2s;
     white-space: nowrap;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: calc(var(--card-width) * 0.7);
+    height: calc(var(--card-width) * 0.7);
 }
 
-#new-game-btn:hover, #win-new-game-btn:hover {
+#win-new-game-btn {
+    width: auto;
+    height: auto;
+    padding: 0.75em 1.5em;
+}
+
+#new-game-btn:hover, #auto-win-btn:hover, #win-new-game-btn:hover {
     background-color: #ffca2c;
 }
 
@@ -123,6 +141,7 @@ body {
     justify-content: center;
     gap: var(--pile-gap);
     flex-shrink: 0;
+    height: 1px; /* Just a spacer */
 }
 
 #stock-waste-container {
@@ -137,10 +156,10 @@ body {
     border-radius: var(--card-border-radius);
     position: absolute;
     cursor: pointer;
-    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.2s;
     transform-origin: center center;
     box-shadow: 0 1px 3px rgba(0,0,0,0.2);
     -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+    transition: transform 0.2s ease-out;
 }
 
 .card.dragging {
@@ -164,8 +183,8 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: clamp(2px, 1vw, 5px);
-    font-size: calc(var(--card-width) * 0.25);
+    padding: clamp(2px, 1.2vw, 5px);
+    font-size: calc(var(--card-width) * 0.28);
     font-weight: bold;
     border: 1px solid #ddd;
 }
@@ -217,7 +236,7 @@ body {
 }
 
 .card .card-suit img {
-    width: calc(var(--card-width) * 0.18);
+    width: calc(var(--card-width) * 0.22);
     height: auto;
     display: block;
 }
@@ -233,7 +252,7 @@ body {
 }
 
 .card[data-pile="waste"] {
-    left: calc(var(--pile-gap) * var(--card-index) / 4);
+    transform: translateX(calc(var(--pile-gap) * var(--card-index) / 4));
 }
 
 /* Win Screen */

@@ -19,6 +19,8 @@ export class Drag {
         this.onPointerUp = this.onPointerUp.bind(this);
         this.onPointerCancel = this.onPointerCancel.bind(this);
 
+        this.doubleTapTimeout = null;
+
         this.ui.gameContainer.addEventListener('pointerdown', this.onPointerDown);
     }
 
@@ -37,13 +39,27 @@ export class Drag {
         this.startX = e.clientX;
         this.startY = e.clientY;
         
-        if (!cardElement || cardElement.closest('.card.is-flipped')) {
+        if (!cardElement) {
             this.handleContainerClick(targetElement.closest('.pile, #game-container'));
             return;
         }
 
+        // Prevent default text selection, etc.
         e.preventDefault();
-        
+
+        if(cardElement.closest('.is-flipped')) {
+            const pileName = cardElement.dataset.pile;
+            const cardId = cardElement.dataset.id;
+            const [type, index] = pileName.split('-');
+            const pile = this.game.state.tableau[index];
+            if (pile && pile.length > 0 && pile[pile.length - 1].id === cardId) {
+                if (this.game.flipTableauCard(pile)) {
+                    this.sound.play('deal');
+                }
+            }
+            return;
+        }
+
         const cardId = cardElement.dataset.id;
         const { pile, pileName, cardIndex } = this.game.getCardAndPile(cardId);
         
@@ -90,17 +106,29 @@ export class Drag {
     }
     
     handleCardTap(cardElement) {
-        const cardId = cardElement.dataset.id;
-        
-        // Auto-move to foundation
-        const targetFoundation = this.game.findAutoMoveTarget(cardId, 'foundation');
-        if (targetFoundation) {
-            if (this.game.moveCards([cardId], targetFoundation)) {
-                this.sound.play('place');
+        const now = new Date().getTime();
+        const timesince = now - this.lastTap;
+
+        if ((timesince < 300) && (timesince > 0)) {
+            // Double tap
+            if (this.doubleTapTimeout) {
+                clearTimeout(this.doubleTapTimeout);
+                this.doubleTapTimeout = null;
             }
-            return;
+            this.handleCardDoubleTap(cardElement);
+        } else {
+            // Single tap
+            this.doubleTapTimeout = setTimeout(() => {
+                this.handleCardSingleTap(cardElement);
+                this.doubleTapTimeout = null;
+            }, 300);
         }
 
+        this.lastTap = now;
+    }
+
+    handleCardSingleTap(cardElement) {
+        const cardId = cardElement.dataset.id;
         // Flip unflipped tableau card if it's the last in its pile
         const [type, index] = cardElement.dataset.pile.split('-');
         if (type === 'tableau') {
@@ -110,6 +138,21 @@ export class Drag {
                      this.sound.play('deal');
                  }
              }
+        }
+    }
+
+    handleCardDoubleTap(cardElement) {
+        const cardId = cardElement.dataset.id;
+        // Auto-move to foundation
+        const targetFoundation = this.game.findAutoMoveTarget(cardId, 'foundation');
+        if (targetFoundation) {
+            if (this.game.moveCards([cardId], targetFoundation)) {
+                this.sound.play('place');
+            } else {
+                this.sound.play('invalid');
+            }
+        } else {
+            this.sound.play('invalid');
         }
     }
 
@@ -139,28 +182,32 @@ export class Drag {
     }
     
     prepareForDrag() {
-        const firstCardEl = this.draggedElements[0];
-        if (!firstCardEl) return;
+        if (this.draggedElements.length === 0 || !this.draggedElements[0]) return;
         const visibleOverlap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tableau-overlap-visible'));
+        const firstCardEl = this.draggedElements[0];
 
         this.draggedElements.forEach((el, i) => {
             el.classList.add('dragging');
             el.style.zIndex = 1000 + i;
-            const yOffset = i * visibleOverlap;
-            const x = this.startX - this.offsetX;
-            const y = this.startY - this.offsetY + yOffset;
-            el.style.transform = `translate(${x}px, ${y}px)`;
         });
+
+        // Translate the whole group at once by moving just the first card
+        const x = this.startX - this.offsetX;
+        const y = this.startY - this.offsetY;
+        firstCardEl.style.transform = `translate(${x}px, ${y}px)`;
+        
+        // Follower cards are positioned relative to the first one.
+        for(let i = 1; i < this.draggedElements.length; i++) {
+            const yOffset = i * visibleOverlap;
+            this.draggedElements[i].style.transform = `translateY(${yOffset}px)`;
+        }
     }
 
     updateDraggedElementsPosition(clientX, clientY) {
-         const visibleOverlap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tableau-overlap-visible'));
-         this.draggedElements.forEach((el, i) => {
-            const yOffset = i * visibleOverlap;
-            const x = clientX - this.offsetX;
-            const y = clientY - this.offsetY + yOffset;
-            el.style.transform = `translate(${x}px, ${y}px)`;
-        });
+         if (this.draggedElements.length === 0) return;
+         const x = clientX - this.offsetX;
+         const y = clientY - this.offsetY;
+         this.draggedElements[0].style.transform = `translate(${x}px, ${y}px)`;
     }
     
     updateDropZoneHighlight(x, y) {
@@ -177,6 +224,11 @@ export class Drag {
         document.removeEventListener('pointermove', this.onPointerMove);
         document.removeEventListener('pointerup', this.onPointerUp);
         document.removeEventListener('pointercancel', this.onPointerCancel);
+
+        if (this.doubleTapTimeout) {
+            clearTimeout(this.doubleTapTimeout);
+            this.doubleTapTimeout = null;
+        }
 
         if (this.isDragging) {
             document.querySelectorAll('.pile').forEach(p => p.classList.remove('drop-valid', 'drop-invalid'));
@@ -203,7 +255,7 @@ export class Drag {
         } else {
             // It's a tap
             const cardElement = e.target.closest('.card');
-            if(cardElement) {
+            if(cardElement && !cardElement.closest('.is-flipped')) {
                 this.handleCardTap(cardElement);
             }
         }
