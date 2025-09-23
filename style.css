@@ -1,18 +1,22 @@
 :root {
-    --card-width: clamp(40px, 12.5vw, 100px);
+    --card-width: clamp(45px, 12.5vw, 100px);
     --card-height: calc(var(--card-width) * 1.4);
-    --card-border-radius: 6px;
-    --pile-gap: 1.5vw;
-    --tableau-overlap: calc(var(--card-height) / 3);
+    --card-border-radius: clamp(4px, 1vw, 8px);
+    --pile-gap: clamp(8px, 2vw, 16px);
+    --tableau-overlap-visible: calc(var(--card-height) / 5);
+    --tableau-overlap-hidden: calc(var(--card-height) / 10);
     
-    --color-background: #0a3824;
+    --color-background: #0d472a;
+    --color-felt: #105937;
     --color-pile: #0000002a;
-    --color-card-front: #f8f8f8;
+    --color-card-front: #fdfdfd;
     --color-card-back: #1e5c37;
     --color-red: #d92d2d;
     --color-black: #222;
     --color-text-light: #fff;
     --color-accent: #ffc107;
+
+    font-size: 16px;
 }
 
 * {
@@ -24,7 +28,7 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-    background-color: var(--color-background);
+    background: radial-gradient(circle, var(--color-felt) 0%, var(--color-background) 80%);
     color: var(--color-text-light);
     overflow: hidden;
     /* Use dvh for mobile browser compatibility with toolbars */
@@ -38,7 +42,7 @@ body {
     display: flex;
     flex-direction: column;
     padding: var(--pile-gap);
-    height: 100%;
+    height: 100dvh;
     gap: var(--pile-gap);
 }
 
@@ -58,8 +62,8 @@ body {
 }
 
 #new-game-btn, #win-new-game-btn {
-    padding: 12px 24px;
-    font-size: 18px;
+    padding: 0.75em 1.5em;
+    font-size: 1rem;
     font-weight: bold;
     color: var(--color-black);
     background-color: var(--color-accent);
@@ -83,6 +87,7 @@ body {
     width: var(--card-width);
     height: var(--card-height);
     background-color: var(--color-pile);
+    border: 1px dashed rgba(255, 255, 255, 0.2);
     border-radius: var(--card-border-radius);
     position: relative;
 }
@@ -97,6 +102,20 @@ body {
 
 .tableau-pile {
     height: 100%;
+    border: none;
+    background: none;
+}
+
+.tableau-pile::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--card-width);
+    height: var(--card-height);
+    background-color: var(--color-pile);
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    border-radius: var(--card-border-radius);
 }
 
 .bottom-bar {
@@ -118,15 +137,17 @@ body {
     border-radius: var(--card-border-radius);
     position: absolute;
     cursor: pointer;
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s;
+    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.2s;
     transform-origin: center center;
     box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
 }
 
 .card.dragging {
     cursor: grabbing;
     z-index: 1000;
     box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    transition: none; /* Disable transition while dragging for instant feedback */
 }
 
 .card .card-face {
@@ -143,23 +164,43 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 4px;
-    font-size: calc(var(--card-width) * 0.28);
+    padding: clamp(2px, 1vw, 5px);
+    font-size: calc(var(--card-width) * 0.25);
     font-weight: bold;
+    border: 1px solid #ddd;
 }
 
 .card .card-back {
     background-color: var(--color-card-back);
     background-image: url('card-back.png');
     background-size: cover;
+    border: 1px solid rgba(0,0,0,0.2);
+    /* transform: rotateY(180deg); This is handled by is-flipped now */
+}
+
+.card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.5s;
+    transform-style: preserve-3d;
+}
+
+.card.is-flipped .card-inner {
     transform: rotateY(180deg);
 }
 
-.card.is-flipped {
-    transform: rotateY(180deg);
+.card-front, .card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    -webkit-backface-visibility: hidden; /* Safari */
+    backface-visibility: hidden;
+    border-radius: var(--card-border-radius);
+    overflow: hidden;
 }
 
-.card.is-flipped .card-front {
+.card-back {
     transform: rotateY(180deg);
 }
 
@@ -176,7 +217,7 @@ body {
 }
 
 .card .card-suit img {
-    width: calc(var(--card-width) * 0.15);
+    width: calc(var(--card-width) * 0.18);
     height: auto;
     display: block;
 }
@@ -184,11 +225,15 @@ body {
 .card[data-color="red"] { color: var(--color-red); }
 .card[data-color="black"] { color: var(--color-black); }
 
-.card[data-pile^="tableau"] {
-    top: calc(var(--tableau-overlap) * var(--card-index));
+.card[data-pile^="tableau"].is-flipped {
+    top: calc(var(--tableau-overlap-hidden) * var(--card-index));
 }
+.card[data-pile^="tableau"]:not(.is-flipped) {
+    top: calc(var(--tableau-overlap-visible) * var(--card-index));
+}
+
 .card[data-pile="waste"] {
-    left: calc(var(--pile-gap) * var(--card-index) / 3);
+    left: calc(var(--pile-gap) * var(--card-index) / 4);
 }
 
 /* Win Screen */
@@ -214,29 +259,32 @@ body {
 
 .win-message {
     text-align: center;
-    padding: 40px;
+    padding: clamp(20px, 5vw, 40px);
     background-color: var(--color-background);
     border-radius: 20px;
-    box-shadow: 0 0 30px var(--color-accent);
+    box-shadow: 0 0 30px rgba(0,0,0,0.5), 0 0 40px var(--color-accent);
 }
 
 .win-message h1 {
-    font-size: 3em;
+    font-size: clamp(2.5rem, 8vw, 4rem);
     color: var(--color-accent);
     margin-bottom: 10px;
+    text-shadow: 0 0 10px var(--color-accent);
 }
 
 .win-message p {
-    font-size: 1.5em;
+    font-size: clamp(1rem, 4vw, 1.5rem);
     margin-bottom: 30px;
 }
 
 /* For drag drop validation */
-.pile.drop-valid {
+.pile.drop-valid, .tableau-pile.drop-valid::before {
     background-color: #ffffff44;
+    border-style: solid;
 }
-.pile.drop-invalid {
+.pile.drop-invalid, .tableau-pile.drop-invalid::before {
     background-color: #ff000044;
+    border-style: solid;
 }
 
 .stock-pile.empty::after {

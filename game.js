@@ -101,7 +101,7 @@ export class Game {
             this.state.waste.push(card);
         } else if (this.state.waste.length > 0) {
             // Restock
-            this.state.stock = this.state.waste.reverse().map(c => ({...c, isFaceUp: false}));
+            this.state.stock = this.state.waste.map(c => ({...c, isFaceUp: false})).reverse();
             this.state.waste = [];
         }
         this.onStateChanged(this.state);
@@ -121,6 +121,7 @@ export class Game {
                  const pile = this.state[pileType];
                  const cardIndex = pile.findIndex(c => c.id === cardId);
                  if (cardIndex > -1) {
+                     // For stock and waste, always treat pileName as pile-0
                      return { card: pile[cardIndex], pile, pileName: `${pileType}-0`, cardIndex };
                  }
             }
@@ -188,6 +189,64 @@ export class Game {
         return false;
     }
 
+    findAutoMoveTarget(cardId, targetType = 'foundation') {
+        const { card, pile, cardIndex } = this.getCardAndPile(cardId);
+        
+        // Card must be the top card of its current pile (or only card being moved from waste)
+        if (!card || !card.isFaceUp || cardIndex !== pile.length - 1) {
+            return null;
+        }
+
+        if (targetType === 'foundation') {
+            for (let i = 0; i < this.state.foundations.length; i++) {
+                const targetPileName = `foundation-${i}`;
+                if (this.isValidMove(card, [cardId], targetPileName)) {
+                    return targetPileName;
+                }
+            }
+        }
+        // Could add logic for tableau auto-moves here if desired
+        return null;
+    }
+
+    autoPlayToFoundations() {
+        let cardsMoved = false;
+        let anyMoveMadeInLoop = true;
+    
+        while(anyMoveMadeInLoop) {
+            anyMoveMadeInLoop = false;
+            // Check top of waste pile
+            if (this.state.waste.length > 0) {
+                const topWasteCard = this.state.waste[this.state.waste.length - 1];
+                const target = this.findAutoMoveTarget(topWasteCard.id, 'foundation');
+                if (target) {
+                    if (this.moveCards([topWasteCard.id], target)) {
+                        anyMoveMadeInLoop = true;
+                        cardsMoved = true;
+                    }
+                }
+            }
+    
+            // Check top of tableau piles
+            for (const pile of this.state.tableau) {
+                if (pile.length > 0) {
+                    const topTableauCard = pile[pile.length - 1];
+                    if (topTableauCard.isFaceUp) {
+                         const target = this.findAutoMoveTarget(topTableauCard.id, 'foundation');
+                         if (target) {
+                             if(this.moveCards([topTableauCard.id], target)) {
+                                anyMoveMadeInLoop = true;
+                                cardsMoved = true;
+                            }
+                         }
+                    }
+                }
+            }
+        }
+        if(cardsMoved) this.onStateChanged(this.state);
+        return cardsMoved;
+    }
+
     checkWinCondition() {
         const totalCardsInFoundations = this.state.foundations.reduce((sum, pile) => sum + pile.length, 0);
         if (totalCardsInFoundations === 52) {
@@ -195,4 +254,3 @@ export class Game {
         }
     }
 }
-

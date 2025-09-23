@@ -72,8 +72,9 @@ export class UI {
         const cardBack = document.createElement('div');
         cardBack.className = 'card-back';
 
-        card.appendChild(cardFront);
-        card.appendChild(cardBack);
+        cardInner.appendChild(cardFront);
+        cardInner.appendChild(cardBack);
+        card.appendChild(cardInner);
 
         return card;
     }
@@ -106,4 +107,3 @@ export class UI {
         });
     }
 }
-
