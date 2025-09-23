@@ -1,5 +1,3 @@
-
-```javascript
 export class Drag {
     constructor(game, ui, sound) {
         this.game = game;
