@@ -224,8 +224,8 @@ export class Drag {
                 this.sound.play('place');
             } else {
                 this.sound.play('invalid');
-                // Re-render to snap back if move is invalid
-                this.game.onStateChanged(this.game.state); 
+                // The card will snap back to its original position via CSS transition
+                // when resetDragState() is called, so no re-render is needed here.
             }
         }
         
