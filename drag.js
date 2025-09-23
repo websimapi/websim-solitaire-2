@@ -176,10 +176,8 @@ export class Drag {
          const deltaY = clientY - this.startY;
 
          this.draggedElements.forEach((el, i) => {
-            const startPos = this.startPositions[i];
-            // The transform should be relative to the element's *original* static position in the layout.
-            // By calculating the delta from the start of the drag, we get the correct offset.
-             el.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+            // No need to use startPos, as transform is relative to the element's layout position.
+            el.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
          });
     }
     
@@ -187,9 +185,13 @@ export class Drag {
         document.querySelectorAll('.pile').forEach(p => p.classList.remove('drop-valid', 'drop-invalid'));
         
         // Temporarily hide cards to find element underneath
-        this.draggedElements.forEach(el => el.style.pointerEvents = 'none');
+        const originalDisplays = this.draggedElements.map(el => el.style.display);
+        this.draggedElements.forEach(el => el.style.display = 'none');
+        
         const dropTarget = document.elementFromPoint(x, y)?.closest('.pile');
-        this.draggedElements.forEach(el => el.style.pointerEvents = 'auto');
+        
+        // Restore elements
+        this.draggedElements.forEach((el, i) => el.style.display = originalDisplays[i] || '');
         
         if (dropTarget) {
             const targetPileName = dropTarget.dataset.pile;
@@ -205,14 +207,18 @@ export class Drag {
             document.querySelectorAll('.pile').forEach(p => p.classList.remove('drop-valid', 'drop-invalid'));
             
             if (this.draggedElements.length === 0) {
-                // This block is to handle reset after a failed drag start
                 this.resetDragState();
                 return;
             }
     
-            this.draggedElements.forEach(el => el.style.pointerEvents = 'none');
+            // Temporarily hide cards to find element underneath
+            const originalDisplays = this.draggedElements.map(el => el.style.display);
+            this.draggedElements.forEach(el => el.style.display = 'none');
+            
             const dropTarget = document.elementFromPoint(e.clientX, e.clientY)?.closest('.pile');
-            this.draggedElements.forEach(el => el.style.pointerEvents = 'auto');
+            
+            // Restore elements before state change
+            this.draggedElements.forEach((el, i) => el.style.display = originalDisplays[i] || '');
             
             let moveSuccessful = false;
             if (dropTarget) {
@@ -224,8 +230,6 @@ export class Drag {
                 this.sound.play('place');
             } else {
                 this.sound.play('invalid');
-                // The card will snap back to its original position via CSS transition
-                // when resetDragState() is called, so no re-render is needed here.
             }
         }
         
