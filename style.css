@@ -1,9 +1,9 @@
 :root {
-    --card-width: clamp(60px, 12.5vw, 100px);
+    --card-width: clamp(40px, 12.5vw, 100px);
     --card-height: calc(var(--card-width) * 1.4);
-    --card-border-radius: 8px;
+    --card-border-radius: 6px;
     --pile-gap: 1.5vw;
-    --tableau-overlap: calc(var(--card-height) / 4);
+    --tableau-overlap: calc(var(--card-height) / 3);
     
     --color-background: #0a3824;
     --color-pile: #0000002a;
@@ -27,9 +27,11 @@ body {
     background-color: var(--color-background);
     color: var(--color-text-light);
     overflow: hidden;
-    height: 100vh;
+    /* Use dvh for mobile browser compatibility with toolbars */
+    height: 100dvh;
     width: 100vw;
     user-select: none;
+    position: fixed; /* Prevents pull-to-refresh and other gestures */
 }
 
 #game-container {
@@ -45,16 +47,19 @@ body {
     justify-content: space-between;
     gap: var(--pile-gap);
     flex-shrink: 0;
+    align-items: flex-start;
 }
 
 #game-menu {
     display: flex;
     align-items: center;
+    justify-content: center;
+    width: 100%;
 }
 
 #new-game-btn, #win-new-game-btn {
-    padding: 10px 20px;
-    font-size: 16px;
+    padding: 12px 24px;
+    font-size: 18px;
     font-weight: bold;
     color: var(--color-black);
     background-color: var(--color-accent);
@@ -96,9 +101,14 @@ body {
 
 .bottom-bar {
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
     gap: var(--pile-gap);
     flex-shrink: 0;
+}
+
+#stock-waste-container {
+    display: flex;
+    gap: var(--pile-gap);
 }
 
 /* Card Styles */
@@ -133,8 +143,8 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 5px;
-    font-size: calc(var(--card-width) * 0.25);
+    padding: 4px;
+    font-size: calc(var(--card-width) * 0.28);
     font-weight: bold;
 }
 
@@ -239,4 +249,3 @@ body {
     transform: translate(-50%, -50%);
     cursor: pointer;
 }
-

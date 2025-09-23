@@ -79,9 +79,11 @@ export class Drag {
         if (!this.pointerDown || this.draggedElements.length === 0) return;
         e.preventDefault();
 
+        const firstCardRect = this.draggedElements[0].getBoundingClientRect();
+        const overlap = firstCardRect.height / 3; // Corresponds to --tableau-overlap in CSS
+
         this.draggedElements.forEach((el, i) => {
-            const rect = el.getBoundingClientRect();
-            const yOffset = i * (el.clientHeight / 4); // Tableau overlap
+            const yOffset = i * overlap;
             const x = e.clientX - this.offsetX;
             const y = e.clientY - this.offsetY + yOffset;
             el.style.transform = `translate(${x}px, ${y}px)`;
@@ -142,4 +144,3 @@ export class Drag {
         this.onPointerUp(e);
     }
 }
-
