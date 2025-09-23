@@ -11,7 +11,9 @@ export class Drag {
         this.startY = 0;
         this.startPile = null;
         this.isDragging = false;
-        this.previewPileEl = null;
+        
+        // New properties for correct positioning
+        this.startPositions = []; // To store original positions of dragged cards
         
         this.onPointerDown = this.onPointerDown.bind(this);
         this.onPointerMove = this.onPointerMove.bind(this);
@@ -128,6 +130,12 @@ export class Drag {
         this.startX = e.clientX;
         this.startY = e.clientY;
 
+        // Store initial positions
+        this.startPositions = this.draggedElements.map(el => {
+            const elRect = el.getBoundingClientRect();
+            return { x: elRect.left, y: elRect.top };
+        });
+
         document.addEventListener('pointermove', this.onPointerMove);
         document.addEventListener('pointerup', this.onPointerUp, { once: true });
         document.addEventListener('pointercancel', this.onPointerUp, { once: true });
@@ -163,40 +171,30 @@ export class Drag {
 
     updateDraggedElementsPosition(clientX, clientY) {
          if (this.draggedElements.length === 0) return;
-         const visibleOverlap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tableau-overlap-visible'));
-         const x = clientX - this.offsetX;
-         const y = clientY - this.offsetY;
+         
+         const deltaX = clientX - this.startX;
+         const deltaY = clientY - this.startY;
+
          this.draggedElements.forEach((el, i) => {
-             const yOffset = i * visibleOverlap;
-             el.style.transform = `translate(${x}px, ${y + yOffset}px) rotate(0.001deg)`; // using rotateZ for hardware acceleration
+            const startPos = this.startPositions[i];
+            // The transform should be relative to the element's *original* static position in the layout.
+            // By calculating the delta from the start of the drag, we get the correct offset.
+             el.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
          });
     }
     
     updateDropZoneHighlight(x, y) {
-        document.querySelectorAll('.pile').forEach(p => {
-            p.classList.remove('drop-valid', 'drop-invalid');
-            p.querySelectorAll('.drop-preview').forEach(el => el.remove());
-        });
+        document.querySelectorAll('.pile').forEach(p => p.classList.remove('drop-valid', 'drop-invalid'));
         
-        const ids = this.draggedCards.map(c => c.id);
-        const candidates = [];
-        [...Array(7).keys()].forEach(i => candidates.push(`tableau-${i}`));
-        [...Array(4).keys()].forEach(i => candidates.push(`foundation-${i}`));
+        // Temporarily hide cards to find element underneath
+        this.draggedElements.forEach(el => el.style.pointerEvents = 'none');
+        const dropTarget = document.elementFromPoint(x, y)?.closest('.pile');
+        this.draggedElements.forEach(el => el.style.pointerEvents = 'auto');
         
-        const validTargets = candidates.filter(n => this.game.isValidMove(this.draggedCards[0], ids, n));
-        
-        const pick = validTargets.map(name => {
-            const el = document.querySelector(`[data-pile="${name}"]`);
-            const r = el.getBoundingClientRect();
-            return { name, el, d: Math.hypot(x - (r.left + r.width/2), y - (r.top + r.height/2)) };
-        }).sort((a,b) => a.d - b.d)[0];
-        
-        if (pick) {
-            pick.el.classList.add('drop-valid');
-            this.showDropPreview(pick.name);
-        } else {
-            const pt = document.elementFromPoint(x, y)?.closest('.pile');
-            if (pt) pt.classList.add('drop-invalid');
+        if (dropTarget) {
+            const targetPileName = dropTarget.dataset.pile;
+            const isValid = this.game.isValidMove(this.draggedCards[0], this.draggedCards.map(c => c.id), targetPileName);
+            dropTarget.classList.add(isValid ? 'drop-valid' : 'drop-invalid');
         }
     }
 
@@ -215,8 +213,6 @@ export class Drag {
             this.draggedElements.forEach(el => el.style.pointerEvents = 'none');
             const dropTarget = document.elementFromPoint(e.clientX, e.clientY)?.closest('.pile');
             this.draggedElements.forEach(el => el.style.pointerEvents = 'auto');
-            
-            document.querySelectorAll('.pile .drop-preview').forEach(el => el.remove());
             
             let moveSuccessful = false;
             if (dropTarget) {
@@ -250,31 +246,11 @@ export class Drag {
         this.draggedCards = [];
         this.draggedElements = [];
         this.startPile = null;
+        this.startPositions = []; // Clear stored positions
         
         // Important: set isDragging to false at the end of the whole sequence.
         // This setTimeout ensures that any 'click' event that fires after 'pointerup'
         // can be correctly ignored because isDragging will still be true.
         setTimeout(() => this.isDragging = false, 0);
-    }
-    
-    showDropPreview(targetPileName) {
-        const el = document.querySelector(`[data-pile="${targetPileName}"]`);
-        if (!el) return;
-        
-        const visibleOverlap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tableau-overlap-visible'));
-        const [type] = targetPileName.split('-');
-        
-        let baseTop = 0;
-        const last = el.querySelector('.card:last-of-type');
-        if (type === 'tableau' && last) baseTop = last.offsetTop;
-        
-        el.querySelectorAll('.drop-preview').forEach(p => p.remove());
-        
-        this.draggedCards.forEach((_, i) => {
-            const ghost = document.createElement('div');
-            ghost.className = 'drop-preview';
-            ghost.style.top = `${baseTop + i * visibleOverlap}px`;
-            el.appendChild(ghost);
-        });
     }
 }

@@ -110,17 +110,6 @@ body {
     position: relative;
 }
 
-.pile .drop-preview {
-    position: absolute;
-    width: var(--card-width);
-    height: var(--card-height);
-    border: 2px solid #fff;
-    border-radius: var(--card-border-radius);
-    opacity: 0.6;
-    pointer-events: none;
-    box-shadow: inset 0 0 0 2px #ffffff66;
-}
-
 #tableau {
     display: flex;
     justify-content: space-between;
