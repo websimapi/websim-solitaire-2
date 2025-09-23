@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Solitaire</title>
+    <link rel="stylesheet" href="style.css">
+    <script type="importmap">
+        {
+            "imports": {
+                "./game.js": "./game.js",
+                "./ui.js": "./ui.js",
+                "./drag.js": "./drag.js",
+                "./sound.js": "./sound.js"
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="game-container">
+        <div class="top-bar">
+            <div id="game-menu">
+                <button id="new-game-btn">New Game</button>
+            </div>
+            <div id="foundations">
+                <div class="foundation-pile pile" data-pile="foundation-0"></div>
+                <div class="foundation-pile pile" data-pile="foundation-1"></div>
+                <div class="foundation-pile pile" data-pile="foundation-2"></div>
+                <div class="foundation-pile pile" data-pile="foundation-3"></div>
+            </div>
+        </div>
+
+        <div id="tableau">
+            <div class="tableau-pile pile" data-pile="tableau-0"></div>
+            <div class="tableau-pile pile" data-pile="tableau-1"></div>
+            <div class="tableau-pile pile" data-pile="tableau-2"></div>
+            <div class="tableau-pile pile" data-pile="tableau-3"></div>
+            <div class="tableau-pile pile" data-pile="tableau-4"></div>
+            <div class="tableau-pile pile" data-pile="tableau-5"></div>
+            <div class="tableau-pile pile" data-pile="tableau-6"></div>
+        </div>
+
+        <div class="bottom-bar">
+             <div id="stock">
+                <div class="stock-pile pile" data-pile="stock"></div>
+            </div>
+            <div id="waste">
+                <div class="waste-pile pile" data-pile="waste"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="win-screen" class="hidden">
+        <div class="win-message">
+            <h1>You Won!</h1>
+            <p>Congratulations!</p>
+            <button id="win-new-game-btn">Play Again</button>
+        </div>
+    </div>
+
+    <script type="module" src="main.js"></script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4c6229722a6346bc8eb5cb0e5eae5d41","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>
+
