@@ -174,7 +174,11 @@ export class Drag {
         if (this.isDragging) {
             document.querySelectorAll('.pile').forEach(p => p.classList.remove('drop-valid', 'drop-invalid'));
             
-            if (this.draggedElements.length === 0) return;
+            if (this.draggedElements.length === 0) {
+                // This block is to handle reset after a failed drag start
+                this.resetDragState();
+                return;
+            }
     
             this.draggedElements.forEach(el => el.style.pointerEvents = 'none');
             const dropTarget = document.elementFromPoint(e.clientX, e.clientY)?.closest('.pile');
@@ -195,14 +199,24 @@ export class Drag {
             }
         }
         
-        this.draggedElements.forEach(el => {
-            el.classList.remove('dragging');
-            el.style.zIndex = '';
-            el.style.transform = '';
-        });
+        this.resetDragState();
+    }
+
+    resetDragState() {
+        if (this.draggedElements) {
+            this.draggedElements.forEach(el => {
+                if (el) {
+                    el.classList.remove('dragging');
+                    el.style.zIndex = '';
+                    el.style.transform = '';
+                }
+            });
+        }
 
         this.draggedCards = [];
         this.draggedElements = [];
+        this.startPile = null;
+        
         // Important: set isDragging to false at the end of the whole sequence.
         // This setTimeout ensures that any 'click' event that fires after 'pointerup'
         // can be correctly ignored because isDragging will still be true.
