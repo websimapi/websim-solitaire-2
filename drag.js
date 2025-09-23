@@ -88,7 +88,11 @@ export class Drag {
         
         // Allow dragging from tableau stacks.
         if (pileType === 'tableau') {
-             // Draggable.
+            // Must be face up and form a valid sequence
+            const cardsToMove = pile.slice(cardIndex);
+            if (cardsToMove.length === 0 || !cardsToMove[0].isFaceUp || !this.game.isValidTableauSequence(cardsToMove)) {
+                return;
+            }
         } 
         // Allow dragging top card from waste or foundations.
         else if ((pileType === 'waste' || pileType === 'foundation') && cardIndex === pile.length - 1) {

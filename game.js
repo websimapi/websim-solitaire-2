@@ -114,15 +114,14 @@ export class Game {
                     const pile = this.state[pileType][i];
                     const cardIndex = pile.findIndex(c => c.id === cardId);
                     if (cardIndex > -1) {
-                        return { card: pile[cardIndex], pile, pileName: `${pileType}-${i}`, cardIndex };
+                        return { card: pile[cardIndex], pile, pileName: `${pileType.slice(0, -1)}-${i}`, cardIndex };
                     }
                 }
             } else {
                  const pile = this.state[pileType];
                  const cardIndex = pile.findIndex(c => c.id === cardId);
                  if (cardIndex > -1) {
-                     // For stock and waste, always treat pileName as pile-0
-                     return { card: pile[cardIndex], pile, pileName: `${pileType}-0`, cardIndex };
+                     return { card: pile[cardIndex], pile, pileName: pileType, cardIndex };
                  }
             }
         }
@@ -187,6 +186,24 @@ export class Game {
             }
         }
         return false;
+    }
+
+    isValidTableauSequence(cards) {
+        if (cards.length <= 1) return true;
+        
+        for (let i = 1; i < cards.length; i++) {
+            const prevCard = cards[i - 1];
+            const currentCard = cards[i];
+            
+            // Must be face up
+            if (!prevCard.isFaceUp || !currentCard.isFaceUp) return false;
+            
+            // Must be alternating colors and descending values
+            if (prevCard.color === currentCard.color || prevCard.value !== currentCard.value + 1) {
+                return false;
+            }
+        }
+        return true;
     }
 
     findAutoMoveTarget(cardId, targetType = 'foundation') {
